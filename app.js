@@ -18,7 +18,7 @@ btn();
 */
 document.querySelector('.btn-roll').addEventListener('click',function()
 {
-    if(gamePlaying)
+    if(!gamePlaying)
         {
             //1. Random number
             var dice = Math.floor(Math.random()*6) + 1;
