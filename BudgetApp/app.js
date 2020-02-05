@@ -13,16 +13,29 @@ var budgetController = (function() {
       this.value = value;   
     };
     
+    var calculateTotal = function(type){
+        var sum = 0;
+        data.allItems[type].forEach(function(cur){
+            sum += cur.value;
+        });
+        data.totals[type] = sum;
+    };
+    
     //Data Structure for each object
     var data = {
         allItems:{
             inc: [],
-            exp:[]
+            exp: []
         },
+        
         totals:{
-            inc:0,
-            exp:0
-        }
+            inc: 0,
+            exp: 0
+        },
+        
+        budget: 0,
+        
+        percentage: -1
     };
     
     //Public Vairables
@@ -54,6 +67,37 @@ var budgetController = (function() {
                 //Return the new Element
                 return newItem;
             },
+        
+        getBudget: function(){
+            return{
+                budget: data.budget,
+                totalIncome: data.totals.inc,
+                totalExpenses: data.totals.exp,
+                percentage: data.percentage
+            };
+        },
+        
+        calculateBudget: function(){
+            //1. Calculate total income and expenses.
+                calculateTotal('exp');
+                calculateTotal('inc');
+            
+            //2. Calculate month budget: income - expenses.
+                data.budget = data.totals.inc - data.totals.exp;
+            
+            //3. calculate the perentage of budget consumed.
+                if(data.totals.inc>0)
+                {
+                    data.percentage = Math.round((data.totals.exp/data.totals.inc)*100);    
+                }
+                else
+                    {
+                        alert('No Income No Expense');
+                        data.percentage = -1;
+                    }
+                
+        },
+        
         testing: function(){
             console.log(data);
         }
@@ -68,8 +112,12 @@ var UIController = (function(){
         inputType: '.add__type',
         inputDesc: '.add__description',
         inputValue: '.add__value',
-        incomeContainer:'.income__list',
-        expensesContainer: '.expenses__list'
+        incomeContainer: '.income__list',
+        expensesContainer: '.expenses__list',
+        budgetLabel: '.budget__value',
+        incomeLabel: '.budget__income--value',
+        expensesLabel: '.budget__expenses--value',
+        percentageLabel: '.budget__expenses--percentage'
         
     };
     
@@ -86,8 +134,30 @@ var UIController = (function(){
                 value: parseFloat(document.querySelector(DomStrings.inputValue).value)
             };
         },
+       
+       displayBudget: function(obj){
+           document.querySelector(DomStrings.budgetLabel).textContent = obj.budget;
+           document.querySelector(DomStrings.incomeLabel).textContent = obj.totalIncome;
+           document.querySelector(DomStrings.expensesLabel).textContent = obj.totalExpenses;
+           if(obj.percentage > 0)
+               {
+                   document.querySelector(DomStrings.percentageLabel).textContent = obj.percentage + '%';
+               }
+           else
+           {
+                document.querySelector(DomStrings.percentageLabel).textContent = '---';    
+           }
+           /*
+                budget: data.budget,
+                totalIncome: data.totals.inc,
+                totalExpenses: data.totals.exp,
+                percentage: data.percentage
+           */
+           
+           
+       },
         
-        getDomStrings: function(){
+       getDomStrings: function(){
                 return DomStrings;
         },
        
@@ -148,11 +218,11 @@ var Controller = (function(budgetCtrl, UICtrl){
     
     var UpdateBudget = function(){
         // 1. Calculate the budget
-        
+            budgetCtrl.calculateBudget()
         //2. Return the budget
-        
+            var budget = budgetCtrl.getBudget();
         // 3. Display the budget on the UI
-        
+            UICtrl.displayBudget(budget);
         
     };
     
@@ -188,6 +258,12 @@ var Controller = (function(budgetCtrl, UICtrl){
     return{
         init: function(){
             console.log('Exectuted!');
+            UICtrl.displayBudget({
+                budget:0,
+                totalIncome: 0,
+                totalExpenses: 0,
+                percentage: -1
+            });
             setUpEventListener();
         }
     }
